@@ -29,5 +29,13 @@ g.add_edge(START,"chat_llm")
 g.add_edge("chat_llm",END)
 
 workflow=g.compile()
-print(workflow.invoke({"message":"What is so special about maharashtra? "}))
+# print(workflow.invoke({"message":"What is so special about maharashtra? "}))
+for message_chunks,metadata in workflow.stream(
+    {"message":"What is so special about maharashtra? "},
+    config={"configurable":{"thread_id":"1"}},
+    stream_mode="messages"
+):
+    if message_chunks.content:
+        print(message_chunks.content,end="",flush=True)
+    
 
