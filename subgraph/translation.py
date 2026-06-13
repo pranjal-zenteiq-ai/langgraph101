@@ -28,19 +28,29 @@ llm=ChatNVIDIA(
     top_p=1,
     max_completion_tokens=16384
 )
-
 def translation(state:State1)->State1:
     prompt=f"Translate the following text from english to marathi\n\n{state['english']}"
-    client=llm.invoke(prompt)
-    return {"marathi":client.content}
+    text=""
+    for chunk in llm.stream(prompt):
+        if chunk.content:
+            print(chunk.content,end="",flush=True)
+            text+=chunk.content
+    print("\n")
+    return {"marathi":text}
 
 def generate(state:State2)->State2:
     prompt=f"""
     Generate a poem on the given topic in English
     {state['input']}
     """
-    client=llm.invoke(prompt)
-    return {"english":client.content}
+    text=""
+    for chunk in llm.stream(prompt):
+        if chunk.content:
+            print(chunk.content,end="",flush=True)
+            text+=chunk.content
+
+    print("\n")
+    return {"english":text}
 
 g2=StateGraph(State1)
 g2.add_node("translation",translation)
@@ -58,7 +68,10 @@ g.add_edge("translation_subgraph",END)
 workflow=g.compile()
 
 inputs={"input":"a rainy day in the city"}
-result=workflow.invoke(inputs)
+# for chunk in workflow.stream(
+#     inputs,
+#     stream_mode="values"
+# ):
+#     print(chunk)
 
-print(result["english"])
-print(result["marathi"])
+workflow.invoke(inputs)
